@@ -1,4 +1,4 @@
-# import basic
+import basic
 #
 # while True:
 #     text = input('basic > ')
@@ -9,8 +9,6 @@
 #     else:
 #         print(result)
 #
-import basic
-
 def main():
     while True:
         try:
@@ -19,8 +17,11 @@ def main():
             if error:
                 print(error.as_string())
             else:
-                 print(result)
+                print(result)
         except KeyboardInterrupt:
+            print("\nExiting. Goodbye!")
+            break
+        except EOFError:
             print("\nExiting. Goodbye!")
             break
 

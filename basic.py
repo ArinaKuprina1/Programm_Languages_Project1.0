@@ -81,6 +81,7 @@ TT_LBRACE = '{'
 TT_RBRACE = '}'
 TT_LBRACKET = '['
 TT_RBRACKET = ']'
+TT_EOF = 'EOF'
 
 
 class Token:
@@ -258,6 +259,7 @@ class Lexer:
                 self.advance()
                 return [], IllegalCharacterError(pos_start, self.pos, f"Unexpected character '{char}'")
 
+        tokens.append(Token(TT_EOF))
         return tokens, None
 
     def make_identifier(self):
@@ -343,10 +345,21 @@ class BoolNode:
 ###############
 # PARSER
 ###############
+# class Parser:
+#     def __init__(self, tokens):
+#         self.tokens = tokens
+#         self.token_index = 1
+#         self.advance()
+#
+#     def advance(self):
+#         self.token_index += 1
+#         if self.token_index < len(self.tokens):
+#             self.current_token = self.tokens[self.token_index]
+#         return self.current_token
 class Parser:
-    def __init__(tokens):
+    def __init__(self, tokens):
         self.tokens = tokens
-        self.token_index = 1
+        self.token_index = -1  # Start before the first token
         self.advance()
 
     def advance(self):
@@ -355,35 +368,49 @@ class Parser:
             self.current_token = self.tokens[self.token_index]
         return self.current_token
 
-def factor():
-    tok = self.current_token
+#################################
 
-    if tok.type in (TT_INT,TT_FLOAT):
-        self.advance()
-        return NumberNode(tok)
+    def parse(self):
+        res = self.expression()
+        return res
 
-def term():
-    return self.bin_op(self.factor(), (TT_MUL, TT_DIV , TT_MODULO))
+    def factor(self):
+        tok = self.current_token
 
-def expression():
-    return self.bin_op(self.factor(), (TT_PLUS, TT_MINUS))
+        if tok.type in (TT_INT,TT_FLOAT):
+            self.advance()
+            return NumberNode(tok)
 
-def bin_op(self, func, ops):
-    left = func()
+    def term(self):
+        return self.bin_op(self.factor, (TT_MUL, TT_DIV , TT_MODULO))
 
-    while self.current_token in ops:
-        op_tok = self.current_token
-        self.advance()
-        right = func()
-        left = BinOpNode(left, op_tok, right)
-    return left
+    def expression(self):
+        return self.bin_op(self.factor, (TT_PLUS, TT_MINUS))
+
+#################################
+
+    def bin_op(self, func, ops):
+        left = func()
+
+        while self.current_token.type in ops:
+            op_tok = self.current_token
+            self.advance()
+            right = func()
+            left = BinOpNode(left, op_tok, right)
+        return left
 
 ###############
 # RUN
 ###############
 
 def run(fname, text):
+    # Generate tokens
     lexer = Lexer(fname, text)
     tokens, errors = lexer.make_token()
+    if errors: return None, errors
 
-    return tokens, errors
+    # Generate AST
+    parser = Parser(tokens)
+    ast = parser.parse()
+
+    return ast, None
