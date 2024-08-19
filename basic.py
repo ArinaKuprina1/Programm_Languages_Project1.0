@@ -91,22 +91,43 @@ TT_LBRACKET = '['
 TT_RBRACKET = ']'
 TT_EOF = 'EOF'
 
-
+# class Token:
+#     def __init__(self, type_, value=None, pos_start=None, pos_end=None):
+#         self.type = type_
+#         self.value = value
+#         if pos_start:
+#             self.pos_start = pos_start.copy()
+#             self.pos_end = pos_start.copy()
+#             self.pos_end.advance()
+#         if pos_end:
+#             self.pos_end = pos_end
+#
+# class Token:
+#     def __init__(self, type_, value=None, pos_start=None, pos_end=None):
+#         self.type = type_
+#         self.value = value
+#         if pos_start:
+#             self.pos_start = pos_start.copy()
+#             self.pos_end = pos_start.copy()
+#             self.pos_end.advance()
+#         if pos_end:
+#             self.pos_end = pos_end
+#
+#
+#     def __repr__(self):
+#         if self.value: return f'{self.type}: {self.value}'
+#         return f'{self.type}'
 class Token:
     def __init__(self, type_, value=None, pos_start=None, pos_end=None):
         self.type = type_
         self.value = value
-        if pos_start:
-            self.pos_start = pos_start.copy()
-            self.pos_end = pos_start.copy()
-            self.pos_end.advance()
-        if pos_end:
-            self.pos_end = pos_end
+        self.pos_start = pos_start.copy() if pos_start else None
+        self.pos_end = pos_end.copy() if pos_end else pos_start.copy().advance() if pos_start else None
 
     def __repr__(self):
-        if self.value: return f'{self.type}: {self.value}'
+        if self.value:
+            return f'{self.type}: {self.value}'
         return f'{self.type}'
-
 
 ###############
 # LEXER
@@ -152,22 +173,22 @@ class Lexer:
         while self.current_char is not None:
             if self.current_char in ' \t':
                 self.advance()
-            elif self.current_char == '#':  # Start of a comment
+            elif self.current_char == '#':
                 self.advance()
                 self.skip_comment()
             elif self.current_char == '/':
                 self.advance()
-                if self.current_char == '/':  # Single-line comment
+                if self.current_char == '/':
                     self.advance()
                     self.skip_comment()
-                elif self.current_char == '*':  # Multi-line comment
+                elif self.current_char == '*':
                     self.advance()
                     result, error = self.handle_multiline_comment()
                     if error:
                         return [], error
                     tokens.extend(result)
                 else:
-                    tokens.append(Token(TT_DIV))
+                    tokens.append(Token(TT_DIV, pos_start=self.pos))
             elif self.current_char == '"':
                 tokens.append(self.make_string())
             elif self.current_char.isalpha() or self.current_char == '_':
@@ -178,39 +199,39 @@ class Lexer:
             elif self.current_char in DIGITS:
                 tokens.append(self.make_number())
             elif self.current_char == '+':
-                tokens.append(Token(TT_PLUS))
+                tokens.append(Token(TT_PLUS, pos_start=self.pos))
                 self.advance()
             elif self.current_char == '-':
-                tokens.append(Token(TT_MINUS))
+                tokens.append(Token(TT_MINUS, pos_start=self.pos))
                 self.advance()
             elif self.current_char == '*':
-                tokens.append(Token(TT_MUL))
+                tokens.append(Token(TT_MUL, pos_start=self.pos))
                 self.advance()
             elif self.current_char == '%':
-                tokens.append(Token(TT_MODULO))
+                tokens.append(Token(TT_MODULO, pos_start=self.pos))
                 self.advance()
             elif self.current_char == '(':
-                tokens.append(Token(TT_LPAREN))
+                tokens.append(Token(TT_LPAREN, pos_start=self.pos))
                 self.advance()
             elif self.current_char == ')':
-                tokens.append(Token(TT_RPAREN))
+                tokens.append(Token(TT_RPAREN, pos_start=self.pos))
                 self.advance()
             elif self.current_char == '{':
-                tokens.append(Token(TT_LBRACE))
+                tokens.append(Token(TT_LBRACE, pos_start=self.pos))
                 self.advance()
             elif self.current_char == '}':
-                tokens.append(Token(TT_RBRACE))
+                tokens.append(Token(TT_RBRACE, pos_start=self.pos))
                 self.advance()
             elif self.current_char == '[':
-                tokens.append(Token(TT_LBRACKET))
+                tokens.append(Token(TT_LBRACKET, pos_start=self.pos))
                 self.advance()
             elif self.current_char == ']':
-                tokens.append(Token(TT_RBRACKET))
+                tokens.append(Token(TT_RBRACKET, pos_start=self.pos))
                 self.advance()
             elif self.current_char == '&':
                 self.advance()
                 if self.current_char == '&':
-                    tokens.append(Token(TT_AND))
+                    tokens.append(Token(TT_AND, pos_start=self.pos))
                     self.advance()
                 else:
                     pos_start = self.pos.copy()
@@ -220,7 +241,7 @@ class Lexer:
             elif self.current_char == '|':
                 self.advance()
                 if self.current_char == '|':
-                    tokens.append(Token(TT_OR))
+                    tokens.append(Token(TT_OR, pos_start=self.pos))
                     self.advance()
                 else:
                     pos_start = self.pos.copy()
@@ -230,14 +251,14 @@ class Lexer:
             elif self.current_char == '!':
                 self.advance()
                 if self.current_char == '=':
-                    tokens.append(Token(TT_NEQ))
+                    tokens.append(Token(TT_NEQ, pos_start=self.pos))
                     self.advance()
                 else:
-                    tokens.append(Token(TT_NOT))
+                    tokens.append(Token(TT_NOT, pos_start=self.pos))
             elif self.current_char == '=':
                 self.advance()
                 if self.current_char == '=':
-                    tokens.append(Token(TT_EQ))
+                    tokens.append(Token(TT_EQ, pos_start=self.pos))
                     self.advance()
                 else:
                     pos_start = self.pos.copy()
@@ -247,17 +268,17 @@ class Lexer:
             elif self.current_char == '>':
                 self.advance()
                 if self.current_char == '=':
-                    tokens.append(Token(TT_GTE))
+                    tokens.append(Token(TT_GTE, pos_start=self.pos))
                     self.advance()
                 else:
-                    tokens.append(Token(TT_GT))
+                    tokens.append(Token(TT_GT, pos_start=self.pos))
             elif self.current_char == '<':
                 self.advance()
                 if self.current_char == '=':
-                    tokens.append(Token(TT_LTE))
+                    tokens.append(Token(TT_LTE, pos_start=self.pos))
                     self.advance()
                 else:
-                    tokens.append(Token(TT_LT))
+                    tokens.append(Token(TT_LT, pos_start=self.pos))
             elif self.current_char == '\\':
                 pos_start = self.pos.copy()
                 self.advance()
@@ -292,9 +313,8 @@ class Lexer:
             return Token(TT_LAMBDA), None
         else:
             pos_start = self.pos.copy()
-            return Token('IDENTIFIER', id_str), IllegalCharacterError(pos_start, self.pos,
-                                                                      f"Unknown identifier '{id_str}'")
-
+            return Token('IDENTIFIER', id_str, pos_start, self.pos), IllegalCharacterError(pos_start, self.pos,
+                                                                                           f"Unknown identifier '{id_str}'")
     def make_number(self):
         num_str = ''
         dot_count = 0
@@ -315,6 +335,7 @@ class Lexer:
             return Token(TT_FLOAT, float(num_str), pos_start, self.pos)
 
     def make_string(self):
+        pos_start = self.pos.copy()
         self.advance()  # Skip opening quote
         str_value = ''
         while self.current_char is not None and self.current_char != '"':
@@ -330,7 +351,7 @@ class Lexer:
                 str_value += self.current_char
             self.advance()
         self.advance()  # Skip closing quote
-        return Token('STRING', str_value)
+        return Token('STRING', str_value, pos_start, self.pos)
 
 ###############
 # NODES
@@ -357,6 +378,23 @@ class BoolNode:
 
     def __repr__(self):
         return f'({self.tok})'
+
+class UnaryOpNode:
+    def __init__(self, op_tok, node):
+        self.op_tok = op_tok
+        self.node = node
+
+    def __repr__(self):
+        return f'({self.op_tok} {self.node})'
+
+class ComparisonNode:
+    def __init__(self, left_node, op_tok, right_node):
+        self.left_node = left_node
+        self.op_tok = op_tok
+        self.right_node = right_node
+
+    def __repr__(self):
+        return f'({self.left_node} {self.op_tok} {self.right_node})'
 
 #######################################
 # PARSE RESULT
@@ -422,6 +460,10 @@ class Parser:
             res.register(self.advance())
             return res.success(NumberNode(tok))
 
+        elif tok.type == TT_TRUE or tok.type == TT_FALSE:
+            res.register(self.advance())
+            return res.success(BoolNode(tok))
+
         elif tok.type == TT_LPAREN:
             res.register(self.advance())
             expr = res.register(self.expr())
@@ -437,14 +479,28 @@ class Parser:
 
         return res.failure(InvalidSyntaxError(
             tok.pos_start, tok.pos_end,
-            "Expected int or float"
+            "Expected int or float or boolean"
         ))
 
     def term(self):
         return self.bin_op(self.factor, (TT_MUL, TT_DIV, TT_MODULO))
 
     def expr(self):
-        return self.bin_op(self.term, (TT_PLUS, TT_MINUS))
+        res = ParseResult()
+        left = res.register(self.bin_op(self.term, (TT_PLUS, TT_MINUS)))
+        if res.error: return res
+
+        while self.current_tok.type in (TT_AND, TT_OR, TT_NOT ):
+            op_tok = self.current_tok
+            res.register(self.advance())
+            right = res.register(self.bin_op(self.term, (TT_PLUS, TT_MINUS)))
+            if res.error: return res
+            left = BinOpNode(left, op_tok, right)
+
+        return res.success(left)
+
+    def comparison(self):
+        return self.bin_op(self.expr, (TT_EQ, TT_NEQ, TT_LT, TT_GT, TT_LTE, TT_GTE))
 
     ###################################
 
@@ -461,6 +517,8 @@ class Parser:
             left = BinOpNode(left, op_tok, right)
 
         return res.success(left)
+
+
 ###############
 # RUN
 ###############
