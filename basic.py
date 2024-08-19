@@ -1,3 +1,5 @@
+from symbol import comparison
+
 from string_with_arrows import *
 
 ###############
@@ -443,11 +445,19 @@ class Parser:
             ))
         return res
 
+
     ###################################
+
 
     def factor(self):
         res = ParseResult()
         tok = self.current_tok
+
+        if self.current_tok.type == TT_NOT:
+            res.register(self.advance())
+            factor = res.register(self.factor())
+            if res.error: return res
+            return res.success(UnaryOpNode(tok, factor))
 
         if tok.type in (TT_PLUS, TT_MINUS):
             res.register(self.advance())
@@ -484,22 +494,71 @@ class Parser:
     def term(self):
         return self.bin_op(self.factor, (TT_MUL, TT_DIV, TT_MODULO))
 
+    # def expr(self):
+    #     res = ParseResult()
+    #     left = res.register(self.bin_op(self.term, (TT_PLUS, TT_MINUS)))
+    #     if res.error: return res
+    #
+    #     while self.current_tok.type in (TT_AND, TT_OR ):
+    #         op_tok = self.current_tok
+    #         res.register(self.advance())
+    #         right = res.register(self.bin_op(self.term, (TT_AND, TT_OR, TT_NOT)))
+    #         if res.error: return res
+    #         left = BinOpNode(left, op_tok, right)
+    #
+    #     while self.current_tok.type in (TT_EQ, TT_NEQ, TT_LT, TT_GT, TT_LTE, TT_GTE):
+    #         op_tok = self.current_tok
+    #         res.register(self.advance())
+    #         right = res.register(self.comparison())
+    #         if res.error: return res
+    #         left = BinOpNode(left, op_tok, right)
+    #
+    #
+    #     return res.success(left)
     def expr(self):
         res = ParseResult()
-        left = res.register(self.bin_op(self.term, (TT_PLUS, TT_MINUS)))
+        left = res.register(self.term())
         if res.error: return res
 
-        while self.current_tok.type in (TT_AND, TT_OR, TT_NOT ):
+        while self.current_tok.type in (TT_AND, TT_OR):
             op_tok = self.current_tok
             res.register(self.advance())
-            right = res.register(self.bin_op(self.term, (TT_PLUS, TT_MINUS)))
+            right = res.register(self.term())
             if res.error: return res
             left = BinOpNode(left, op_tok, right)
+
+        # Add the comparison logic here
+        if self.current_tok.type in (TT_EQ, TT_NEQ, TT_LT, TT_GT, TT_LTE, TT_GTE):
+            return self.comparison()
 
         return res.success(left)
 
     def comparison(self):
-        return self.bin_op(self.expr, (TT_EQ, TT_NEQ, TT_LT, TT_GT, TT_LTE, TT_GTE))
+        res = ParseResult()
+        left = res.register(self.expr())
+        if res.error: return res
+
+        if isinstance(left, BoolNode):
+            return res.failure(InvalidSyntaxError(
+                left.tok.pos_start, left.tok.pos_end,
+                "Cannot compare boolean with integer"
+            ))
+
+        while self.current_tok.type in (TT_EQ, TT_NEQ, TT_LT, TT_GT, TT_LTE, TT_GTE):
+            op_tok = self.current_tok
+            res.register(self.advance())
+            right = res.register(self.expr())
+            if res.error: return res
+
+            if isinstance(right, BoolNode):
+                return res.failure(InvalidSyntaxError(
+                    right.tok.pos_start, right.tok.pos_end,
+                    "Cannot compare boolean with integer"
+                ))
+
+            left = ComparisonNode(left, op_tok, right)
+
+        return res.success(left)
 
     ###################################
 
