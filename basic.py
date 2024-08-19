@@ -315,6 +315,70 @@ class Lexer:
         return Token('STRING', str_value)
 
 ###############
+# NODES
+###############
+class NumberNode:
+    def __init__(self, tok):
+        self.tok = tok
+
+    def __repr__(self):
+        return f'{self.tok}'
+
+class BinOpNode:
+    def __init__(self, left_node, op_tok, right_node):
+        self.left_node = left_node
+        self.op_tok = op_tok
+        self.right_node = right_node
+
+    def __repr__(self):
+        return f'({self.left_node} {self.op_tok} {self.right_node})'
+
+class BoolNode:
+    def __init__(self, tok):
+        self.tok = tok
+
+    def __repr__(self):
+        return f'({self.tok})'
+
+###############
+# PARSER
+###############
+class Parser:
+    def __init__(tokens):
+        self.tokens = tokens
+        self.token_index = 1
+        self.advance()
+
+    def advance(self):
+        self.token_index += 1
+        if self.token_index < len(self.tokens):
+            self.current_token = self.tokens[self.token_index]
+        return self.current_token
+
+def factor():
+    tok = self.current_token
+
+    if tok.type in (TT_INT,TT_FLOAT):
+        self.advance()
+        return NumberNode(tok)
+
+def term():
+    return self.bin_op(self.factor(), (TT_MUL, TT_DIV , TT_MODULO))
+
+def expression():
+    return self.bin_op(self.factor(), (TT_PLUS, TT_MINUS))
+
+def bin_op(self, func, ops):
+    left = func()
+
+    while self.current_token in ops:
+        op_tok = self.current_token
+        self.advance()
+        right = func()
+        left = BinOpNode(left, op_tok, right)
+    return left
+
+###############
 # RUN
 ###############
 
