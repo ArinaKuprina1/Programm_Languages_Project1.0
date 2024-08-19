@@ -110,11 +110,58 @@ class Lexer:
         self.pos.advance(self.current_char)
         self.current_char = self.text[self.pos.index] if self.pos.index < len(self.text) else None
 
+    def skip_whitespace(self):
+        while self.current_char is not None and self.current_char in ' \t':
+            self.advance()
+
+    def skip_comment(self):
+        while self.current_char is not None and self.current_char != '\n':
+            self.advance()
+
+    def handle_multiline_comment(self):
+        self.advance()  # Skip the first '*'
+        while self.current_char is not None:
+            if self.current_char == '*':
+                self.advance()
+                if self.current_char == '/':
+                    self.advance()
+                    return [], None
+            else:
+                self.advance()
+        # Error handling if no end of multiline comment found
+        pos_start = self.pos.copy()
+        return [], IllegalCharacterError(pos_start, self.pos, "Unterminated multiline comment")
+
     def make_token(self):
         tokens = []
         while self.current_char is not None:
             if self.current_char in ' \t':
                 self.advance()
+            elif self.current_char == '#':  # Start of a comment
+                self.advance()
+                self.skip_comment()
+            elif self.current_char == '/':
+                self.advance()
+                if self.current_char == '/':  # Single-line comment
+                    self.advance()
+                    self.skip_comment()
+                elif self.current_char == '*':  # Multi-line comment
+                    self.advance()
+                    result, error = self.handle_multiline_comment()
+                    if error:
+                        return [], error
+                    tokens.extend(result)
+                else:
+                    tokens.append(Token(TT_DIV))
+            elif self.current_char == '"':
+                tokens.append(self.make_string())
+            elif self.current_char.isalpha() or self.current_char == '_':
+                token, error = self.make_identifier()
+                if error:
+                    return [], error
+                tokens.append(token)
+            elif self.current_char in DIGITS:
+                tokens.append(self.make_number())
             elif self.current_char == '+':
                 tokens.append(Token(TT_PLUS))
                 self.advance()
@@ -123,9 +170,6 @@ class Lexer:
                 self.advance()
             elif self.current_char == '*':
                 tokens.append(Token(TT_MUL))
-                self.advance()
-            elif self.current_char == '/':
-                tokens.append(Token(TT_DIV))
                 self.advance()
             elif self.current_char == '%':
                 tokens.append(Token(TT_MODULO))
@@ -157,7 +201,7 @@ class Lexer:
                     pos_start = self.pos.copy()
                     char = '&'
                     self.advance()
-                    return [], IllegalCharacterError(pos_start, self.pos, "'" + char + "'")
+                    return [], IllegalCharacterError(pos_start, self.pos, f"Unexpected character '{char}'")
             elif self.current_char == '|':
                 self.advance()
                 if self.current_char == '|':
@@ -167,7 +211,7 @@ class Lexer:
                     pos_start = self.pos.copy()
                     char = '|'
                     self.advance()
-                    return [], IllegalCharacterError(pos_start, self.pos, "'" + char + "'")
+                    return [], IllegalCharacterError(pos_start, self.pos, f"Unexpected character '{char}'")
             elif self.current_char == '!':
                 self.advance()
                 if self.current_char == '=':
@@ -184,7 +228,7 @@ class Lexer:
                     pos_start = self.pos.copy()
                     char = '='
                     self.advance()
-                    return [], IllegalCharacterError(pos_start, self.pos, "'" + char + "'")
+                    return [], IllegalCharacterError(pos_start, self.pos, f"Unexpected character '{char}'")
             elif self.current_char == '>':
                 self.advance()
                 if self.current_char == '=':
@@ -199,15 +243,20 @@ class Lexer:
                     self.advance()
                 else:
                     tokens.append(Token(TT_LT))
-            elif self.current_char.isalpha() or self.current_char == '_':
-                tokens.append(self.make_identifier())
-            elif self.current_char in DIGITS:
-                tokens.append(self.make_number())
+            elif self.current_char == '\\':
+                pos_start = self.pos.copy()
+                self.advance()
+                if self.current_char in ['"', '\\']:
+                    tokens.append(Token('STRING', self.current_char))  # Add escaped characters
+                    self.advance()
+                else:
+                    return [], IllegalCharacterError(pos_start, self.pos,
+                                                     f"Unexpected character '\\{self.current_char}'")
             else:
                 pos_start = self.pos.copy()
                 char = self.current_char
                 self.advance()
-                return [], IllegalCharacterError(pos_start, self.pos, "'" + char + "'")
+                return [], IllegalCharacterError(pos_start, self.pos, f"Unexpected character '{char}'")
 
         return tokens, None
 
@@ -217,25 +266,23 @@ class Lexer:
             id_str += self.current_char
             self.advance()
 
-        if id_str == 'True' or id_str == 'TRUE' or id_str == 'true':
-            return Token(TT_TRUE)
-        elif id_str == 'False' or id_str == 'FALSE' or id_str == 'false':
-            return Token(TT_FALSE)
+        if id_str.lower() == 'true':
+            return Token(TT_TRUE), None
+        elif id_str.lower() == 'false':
+            return Token(TT_FALSE), None
         elif id_str == 'def':
-            return Token(TT_DEF)
+            return Token(TT_DEF), None
         elif id_str == 'lambda':
-            return Token(TT_LAMBDA)
+            return Token(TT_LAMBDA), None
         else:
-            # Unknown identifier
             pos_start = self.pos.copy()
             return Token('IDENTIFIER', id_str), IllegalCharacterError(pos_start, self.pos,
                                                                       f"Unknown identifier '{id_str}'")
-
     def make_number(self):
         num_str = ''
         dot_count = 0
 
-        while self.current_char is not None and self.current_char in DIGITS + '.':
+        while self.current_char is not None and (self.current_char in DIGITS + '.'):
             if self.current_char == '.':
                 if dot_count == 1: break
                 dot_count += 1
@@ -248,6 +295,24 @@ class Lexer:
             return Token(TT_INT, int(num_str))
         else:
             return Token(TT_FLOAT, float(num_str))
+
+    def make_string(self):
+        self.advance()  # Skip opening quote
+        str_value = ''
+        while self.current_char is not None and self.current_char != '"':
+            if self.current_char == '\\':
+                self.advance()
+                if self.current_char == '"':
+                    str_value += '"'
+                elif self.current_char == '\\':
+                    str_value += '\\'
+                else:
+                    str_value += '\\' + self.current_char
+            else:
+                str_value += self.current_char
+            self.advance()
+        self.advance()  # Skip closing quote
+        return Token('STRING', str_value)
 
 ###############
 # RUN

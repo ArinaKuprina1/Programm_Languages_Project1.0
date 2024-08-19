@@ -1,10 +1,28 @@
+# import basic
+#
+# while True:
+#     text = input('basic > ')
+#     result, error = basic.run('<stdin>', text)
+#
+#     if error:
+#         print(error.as_string())
+#     else:
+#         print(result)
+#
 import basic
 
-while True:
-    text = input('basic > ')
-    result, error = basic.run('<stdin>', text)
+def main():
+    while True:
+        try:
+            text = input('basic > ')
+            result, error = basic.run('<stdin>', text)
+            if error:
+                print(error.as_string())
+            else:
+                 print(result)
+        except KeyboardInterrupt:
+            print("\nExiting. Goodbye!")
+            break
 
-    if error:
-        print(error.as_string())
-    else:
-        print(result)
+if __name__ == "__main__":
+    main()
