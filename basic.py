@@ -1,5 +1,3 @@
-from symbol import comparison
-
 from string_with_arrows import *
 
 ###############
@@ -453,7 +451,7 @@ class Parser:
         res = ParseResult()
         tok = self.current_tok
 
-        if self.current_tok.type == TT_NOT:
+        if tok.type == TT_NOT:
             res.register(self.advance())
             factor = res.register(self.factor())
             if res.error: return res
@@ -516,8 +514,9 @@ class Parser:
     #
     #     return res.success(left)
     def expr(self):
+
         res = ParseResult()
-        left = res.register(self.term())
+        left = res.register(self.bin_op(self.term, (TT_PLUS, TT_MINUS)))
         if res.error: return res
 
         while self.current_tok.type in (TT_AND, TT_OR):
@@ -528,8 +527,13 @@ class Parser:
             left = BinOpNode(left, op_tok, right)
 
         # Add the comparison logic here
-        if self.current_tok.type in (TT_EQ, TT_NEQ, TT_LT, TT_GT, TT_LTE, TT_GTE):
-            return self.comparison()
+        while self.current_tok.type in (TT_EQ, TT_NEQ, TT_LT, TT_GT, TT_LTE, TT_GTE):
+                op_tok = self.current_tok
+                res.register(self.advance())
+                right = res.register(self.comparison())
+                if res.error: return res
+                left = BinOpNode(left, op_tok, right)
+
 
         return res.success(left)
 
@@ -559,7 +563,6 @@ class Parser:
             left = ComparisonNode(left, op_tok, right)
 
         return res.success(left)
-
     ###################################
 
     def bin_op(self, func, ops):
@@ -575,7 +578,6 @@ class Parser:
             left = BinOpNode(left, op_tok, right)
 
         return res.success(left)
-
 
 ###############
 # RUN
