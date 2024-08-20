@@ -303,13 +303,13 @@ class Lexer:
             self.advance()
 
         if id_str.lower() == 'true':
-            return Token(TT_TRUE), None
+            return Token(TT_TRUE,pos_start=self.pos), None
         elif id_str.lower() == 'false':
-            return Token(TT_FALSE), None
+            return Token(TT_FALSE,pos_start=self.pos), None
         elif id_str == 'def':
-            return Token(TT_DEF), None
+            return Token(TT_DEF,pos_start=self.pos), None
         elif id_str == 'lambda':
-            return Token(TT_LAMBDA), None
+            return Token(TT_LAMBDA,pos_start=self.pos), None
         else:
             pos_start = self.pos.copy()
             return Token('IDENTIFIER', id_str, pos_start, self.pos), IllegalCharacterError(pos_start, self.pos,
@@ -363,6 +363,16 @@ class NumberNode:
         return f'{self.tok}'
 
 class BinOpNode:
+    def __init__(self, left_node, op_tok, right_node):
+        self.left_node = left_node
+        self.op_tok = op_tok
+        self.right_node = right_node
+
+    def __repr__(self):
+        return f'({self.left_node} {self.op_tok} {self.right_node})'
+
+
+class BoolOpNode:
     def __init__(self, left_node, op_tok, right_node):
         self.left_node = left_node
         self.op_tok = op_tok
@@ -492,27 +502,7 @@ class Parser:
     def term(self):
         return self.bin_op(self.factor, (TT_MUL, TT_DIV, TT_MODULO))
 
-    # def expr(self):
-    #     res = ParseResult()
-    #     left = res.register(self.bin_op(self.term, (TT_PLUS, TT_MINUS)))
-    #     if res.error: return res
-    #
-    #     while self.current_tok.type in (TT_AND, TT_OR ):
-    #         op_tok = self.current_tok
-    #         res.register(self.advance())
-    #         right = res.register(self.bin_op(self.term, (TT_AND, TT_OR, TT_NOT)))
-    #         if res.error: return res
-    #         left = BinOpNode(left, op_tok, right)
-    #
-    #     while self.current_tok.type in (TT_EQ, TT_NEQ, TT_LT, TT_GT, TT_LTE, TT_GTE):
-    #         op_tok = self.current_tok
-    #         res.register(self.advance())
-    #         right = res.register(self.comparison())
-    #         if res.error: return res
-    #         left = BinOpNode(left, op_tok, right)
-    #
-    #
-    #     return res.success(left)
+
     def expr(self):
 
         res = ParseResult()
@@ -520,11 +510,11 @@ class Parser:
         if res.error: return res
 
         while self.current_tok.type in (TT_AND, TT_OR):
-            op_tok = self.current_tok
-            res.register(self.advance())
-            right = res.register(self.term())
-            if res.error: return res
-            left = BinOpNode(left, op_tok, right)
+                op_tok = self.current_tok
+                res.register(self.advance())
+                right = res.register(self.bin_op(self.term, (TT_AND, TT_OR, TT_NOT)))
+                if res.error: return res
+                left = BinOpNode(left, op_tok, right)
 
         # Add the comparison logic here
         while self.current_tok.type in (TT_EQ, TT_NEQ, TT_LT, TT_GT, TT_LTE, TT_GTE):
@@ -533,7 +523,6 @@ class Parser:
                 right = res.register(self.comparison())
                 if res.error: return res
                 left = BinOpNode(left, op_tok, right)
-
 
         return res.success(left)
 
@@ -563,7 +552,8 @@ class Parser:
             left = ComparisonNode(left, op_tok, right)
 
         return res.success(left)
-    ###################################
+
+###################################
 
     def bin_op(self, func, ops):
         res = ParseResult()
