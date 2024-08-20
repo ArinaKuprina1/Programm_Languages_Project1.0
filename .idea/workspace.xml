@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7754e707-8f73-4d26-b6ac-ab109b5ff796" name="Changes" comment="parser identifies bool, int ,comparison operations,arithmetic operations , bool operations">
+    <list default="true" id="7754e707-8f73-4d26-b6ac-ab109b5ff796" name="Changes" comment="started interpreter but it doesn't work at this point because of the position error">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/basic.py" beforeDir="false" afterPath="$PROJECT_DIR$/basic.py" afterDir="false" />
     </list>
@@ -79,7 +79,7 @@
       <option name="presentableId" value="Default" />
       <updated>1724071201196</updated>
       <workItem from="1724081996446" duration="19597000" />
-      <workItem from="1724164237316" duration="11924000" />
+      <workItem from="1724164237316" duration="13647000" />
     </task>
     <task id="LOCAL-00001" summary="changed lexer, and shell file">
       <option name="closed" value="true" />
@@ -161,7 +161,15 @@
       <option name="project" value="LOCAL" />
       <updated>1724175131893</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="started interpreter but it doesn't work at this point because of the position error">
+      <option name="closed" value="true" />
+      <created>1724177572125</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1724177572125</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -172,10 +180,11 @@
     <MESSAGE value="started parser" />
     <MESSAGE value="changes to parser" />
     <MESSAGE value="parser identifies bool, int ,comparison operations,arithmetic operations , bool operations" />
-    <option name="LAST_COMMIT_MESSAGE" value="parser identifies bool, int ,comparison operations,arithmetic operations , bool operations" />
+    <MESSAGE value="started interpreter but it doesn't work at this point because of the position error" />
+    <option name="LAST_COMMIT_MESSAGE" value="started interpreter but it doesn't work at this point because of the position error" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Programm_Languages_Project1_0$basic.coverage" NAME="basic Coverage Results" MODIFIED="1724176067799" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/Programm_Languages_Project1_0$shell.coverage" NAME="shell Coverage Results" MODIFIED="1724177242442" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/Programm_Languages_Project1_0$shell.coverage" NAME="shell Coverage Results" MODIFIED="1724178305162" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
 </project>
