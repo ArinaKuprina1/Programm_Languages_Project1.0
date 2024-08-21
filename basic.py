@@ -476,7 +476,7 @@ class FuncDefNode:
         self.body_node = body_node
 
     def __repr__(self):
-        return f'(defun {self.var_name_tok.value}({", ".join([arg.value for arg in self.arg_name_toks])}) {{ {self.body_node} }})'
+        return f'(defun {self.var_name_tok}({", ".join([arg.value for arg in self.arg_name_toks])}) {{ {self.body_node} }})'
 
 
 # class FuncDefNode:
@@ -800,11 +800,11 @@ class Parser:
         body = res.register(self.expr())
         if res.error: return res
 
-        if self.current_tok.type != TT_RBRACE:
-            return res.failure(InvalidSyntaxError(
-                self.current_tok.pos_start, self.current_tok.pos_end,
-                "Expected '}'"
-            ))
+        # if self.current_tok.type != TT_RBRACE:
+        #     return res.failure(InvalidSyntaxError(
+        #         self.current_tok.pos_start, self.current_tok.pos_end,
+        #         "Expected '}'"
+        #     ))
 
         res.register(self.advance())
         return res.success(FuncDefNode(var_name_tok, arg_name_toks, body))
