@@ -802,7 +802,8 @@ class Interpreter:
                 result, error = left.get_comparison_lte(right)
             elif node.op_tok.type == TT_GTE:
                 result, error = left.get_comparison_gte(right)
-        elif isinstance(left, Boolean):
+        elif isinstance(left, bool):
+
             if node.op_tok.type == TT_AND:
                 result, error = left.anded_by(right)
             elif node.op_tok.type == TT_OR:
@@ -811,7 +812,7 @@ class Interpreter:
         if error:
             return res.failure(error)
         else:
-            return res.success(result.set_pos(node.pos_start, node.pos_end))
+            return res.success(result.set_pos(node.pos_start, node.pos_end).value)
 
     def visit_UnaryOpNode(self, node, context):
         res = RTResult()
