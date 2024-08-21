@@ -4,8 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7754e707-8f73-4d26-b6ac-ab109b5ff796" name="Changes" comment="parser identifies bool, int ,comparison operations,arithmetic operations , bool operations">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="7754e707-8f73-4d26-b6ac-ab109b5ff796" name="Changes" comment="interpreter performs comparison operations,arithmetic operations , bool operations">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/basic.py" beforeDir="false" afterPath="$PROJECT_DIR$/basic.py" afterDir="false" />
     </list>
@@ -143,7 +142,31 @@
       <option name="project" value="LOCAL" />
       <updated>1724105108831</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL‎-00009" summary="interpreter performs comparison operations,arithmetic operations , bool operations">
+      <option name="closed" value="true" />
+      <created>1724265502715</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL‎-00009" />
+      <option name="project" value="LOCAL‎" />
+      <updated>1724265502715</updated>
+    </task>
+    <task id="LOCAL‎-00010" summary="interpreter performs comparison operations,arithmetic operations , bool operations">
+      <option name="closed" value="true" />
+      <created>1724265633375</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL‎-00010" />
+      <option name="project" value="LOCAL‎" />
+      <updated>1724265633375</updated>
+    </task>
+    <task id="LOCAL‎-00011" summary="interpreter performs comparison operations,arithmetic operations , bool operations">
+      <option name="closed" value="true" />
+      <created>1724265775522</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL‎-00011" />
+      <option name="project" value="LOCAL‎" />
+      <updated>1724265775522</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -154,15 +177,16 @@
     <MESSAGE value="started parser" />
     <MESSAGE value="changes to parser" />
     <MESSAGE value="parser identifies bool, int ,comparison operations,arithmetic operations , bool operations" />
-    <option name="LAST_COMMIT_MESSAGE" value="parser identifies bool, int ,comparison operations,arithmetic operations , bool operations" />
+    <MESSAGE value="interpreter performs comparison operations,arithmetic operations , bool operations" />
+    <option name="LAST_COMMIT_MESSAGE" value="interpreter performs comparison operations,arithmetic operations , bool operations" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/basic.py</url>
-          <line>730</line>
-          <option name="timeStamp" value="28" />
+          <line>774</line>
+          <option name="timeStamp" value="30" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

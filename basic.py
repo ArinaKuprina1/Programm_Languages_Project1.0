@@ -477,6 +477,15 @@ class CallNode:
         else:
             self.pos_end = self.node_to_call.pos_end
 
+    class LambdaNode:
+        def _init_(self, arg_name_toks, body_node, arg_exprs=None):
+            self.arg_name_toks = arg_name_toks
+            self.body_node = body_node
+            self.arg_exprs = arg_exprs or []
+
+        def _repr_(self):
+            return f"(lambda {', '.join([arg.value for arg in self.arg_name_toks])}, {self.body_node})"
+
 #######################################
 # PARSE RESULT
 #######################################
@@ -762,6 +771,7 @@ class Parser:
             ))
 
         res.register(self.advance())
+        res.register(self.advance())
         body = res.register(self.expr())
         if res.error: return res
 
@@ -1028,6 +1038,16 @@ class Interpreter:
         else:
             return res.success(number.set_pos(node.pos_start, node.pos_end))
 
+    def visit_LambdaNode(self, node, context):
+        # Create a function object from the lambda expression
+        func = Function(node.arg_name_toks, node.body_node, context)
+
+        # If the lambda is applied immediately, evaluate it with the provided arguments
+        if node.arg_exprs:
+            arg_values = [self.visit(arg_expr, context) for arg_expr in node.arg_exprs]
+            return func.execute(arg_values)
+        else:
+            return func
 ###############
 # RUN
 ###############
@@ -1038,7 +1058,7 @@ def run(fn, text):
     lexer = Lexer(fn, text)
     tokens, error = lexer.make_token()
     if error: return None, error
-
+    print(tokens)
     # Generate AST
     parser = Parser(tokens)
     ast = parser.parse()
