@@ -218,7 +218,7 @@ class Lexer:
                 tokens.append(Token(TT_COMMA, pos_start = self.pos))
                 self.advance()
             elif self.current_char == '.':
-                tokens.append(Token(TT_POINT, pos_start = self.pos))
+                tokens.append(Token(TT_DOT, pos_start = self.pos))
                 self.advance()
             elif self.current_char == '"':
                 tokens.append(self.make_string())
