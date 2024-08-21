@@ -690,27 +690,27 @@ class Number:
 
     def get_comparison_eq(self, other):
         if isinstance(other, Number):
-            return Boolean(TT_TRUE if self.value == other.value else TT_FALSE).set_context(self.context), None
+            return Boolean(self.value == other.value).set_context(self.context), None
 
     def get_comparison_ne(self, other):
         if isinstance(other, Number):
-            return Boolean(bool(self.value != other.value)).set_context(self.context), None
+            return Boolean(TT_TRUE if (self.value != other.value) else TT_FALSE).set_context(self.context), None
 
     def get_comparison_lt(self, other):
         if isinstance(other, Number):
-            return Boolean(bool(self.value < other.value)).set_context(self.context), None
+            return Boolean(TT_TRUE if (self.value < other.value) else TT_FALSE).set_context(self.context), None
 
     def get_comparison_gt(self, other):
         if isinstance(other, Number):
-            return Boolean(bool(self.value > other.value)).set_context(self.context), None
+            return Boolean(TT_TRUE if (self.value > other.value) else TT_FALSE).set_context(self.context), None
 
     def get_comparison_lte(self, other):
         if isinstance(other, Number):
-            return Boolean(bool(self.value <= other.value)).set_context(self.context), None
+            return Boolean(TT_TRUE if (self.value <= other.value)else TT_FALSE).set_context(self.context), None
 
     def get_comparison_gte(self, other):
         if isinstance(other, Number):
-            return Boolean(bool(self.value >= other.value)).set_context(self.context), None
+            return Boolean(TT_TRUE if (self.value >= other.value) else TT_FALSE).set_context(self.context), None
 
 
     def __repr__(self):
@@ -734,15 +734,18 @@ class Boolean:
 
     def anded_by(self, other):
         if isinstance(other, Boolean):
-            return Boolean(TT_TRUE if self.value == TT_TRUE and other.value == TT_TRUE else TT_FALSE).set_context(self.context), None
+            return Boolean(TT_TRUE if(self.value == TT_TRUE and other.value == TT_TRUE) else TT_FALSE).set_context(self.context), None
              #  bool(self.value and other.value)).set_context(self.context), None
 
     def ored_by(self, other):
         if isinstance(other, Boolean):
-            return Boolean(bool(self.value or other.value)).set_context(self.context), None
+            return Boolean(TT_TRUE if(self.value == TT_TRUE or other.value == TT_TRUE) else TT_FALSE).set_context(self.context), None
 
     def notted(self):
-        return Boolean(True if self.value == False else False).set_context(self.context), None
+        return Boolean(self.value == TT_FALSE).set_context(self.context), None
+
+    def __repr__(self):
+        return 'true' if self.value == TT_TRUE else 'false'
 
 #######################################
 # CONTEXT
@@ -781,7 +784,10 @@ class Interpreter:
         right = res.register(self.visit(node.right_node, context))
         if res.error: return res
 
-        if isinstance(left, Number):
+        error = None
+        result = None
+
+        if isinstance(left, Number) :
             if node.op_tok.type == TT_PLUS:
                 result, error = left.added_to(right)
             elif node.op_tok.type == TT_MINUS:
@@ -802,8 +808,7 @@ class Interpreter:
                 result, error = left.get_comparison_lte(right)
             elif node.op_tok.type == TT_GTE:
                 result, error = left.get_comparison_gte(right)
-        elif isinstance(left, bool):
-
+        elif isinstance(left, Boolean) :
             if node.op_tok.type == TT_AND:
                 result, error = left.anded_by(right)
             elif node.op_tok.type == TT_OR:
@@ -811,8 +816,10 @@ class Interpreter:
 
         if error:
             return res.failure(error)
-        else:
-            return res.success(result.set_pos(node.pos_start, node.pos_end).value)
+        if result is None:
+            return res.failure(RTError(node.pos_start, node.pos_end,"Operation resulted is None", context))
+
+        return res.success(result.set_pos(node.pos_start, node.pos_end))
 
     def visit_UnaryOpNode(self, node, context):
         res = RTResult()
