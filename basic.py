@@ -680,14 +680,44 @@ class Parser:
 
         res.register(self.advance())
 
+        if self.current_tok.type != TT_LBRACE:
+            return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected '{'"
+            ))
+
+        # check syntax of func name
         if self.current_tok.type != 'IDENTIFIER':
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
                 "Expected function name"
             ))
 
-        var_name_tok = self.current_tok
         res.register(self.advance())
+
+        if self.current_tok.type != TT_COLON:
+            return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected ':'"
+            ))
+        # get the name of the funct
+        var_name_tok = self.current_tok.value
+        res.register(self.advance())
+
+        # check syntax of arguments
+        if self.current_tok.type != 'IDENTIFIER':
+            return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected arguments name"
+            ))
+
+        res.register(self.advance())
+
+        if self.current_tok.type != TT_COLON:
+            return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected ':'"
+            ))
 
         if self.current_tok.type != TT_LPAREN:
             return res.failure(InvalidSyntaxError(
@@ -722,10 +752,10 @@ class Parser:
 
         res.register(self.advance())
 
-        if self.current_tok.type != TT_LBRACE:
+        if self.current_tok.type != TT_RBRACE:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                "Expected '{'"
+                "Expected '}'"
             ))
 
         res.register(self.advance())
@@ -777,6 +807,7 @@ class Parser:
 
         res.register(self.advance())
         res.register(self.advance())
+        #insertParamToString
         body = res.register(self.expr())
         if res.error: return res
 
