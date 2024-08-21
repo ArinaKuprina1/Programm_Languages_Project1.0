@@ -742,7 +742,7 @@ class Boolean:
             return Boolean(TT_TRUE if(self.value == TT_TRUE or other.value == TT_TRUE) else TT_FALSE).set_context(self.context), None
 
     def notted(self):
-        return Boolean(self.value == TT_FALSE).set_context(self.context), None
+        return Boolean(TT_TRUE if self.value == TT_FALSE else TT_FALSE).set_context(self.context), None
 
     def __repr__(self):
         return 'true' if self.value == TT_TRUE else 'false'
@@ -771,6 +771,9 @@ class Interpreter:
         raise Exception(f'No visit_{type(node).__name__} method defined')
 
     ###################################
+
+    def visit_BoolNode(self, node, context):
+        return RTResult().success(Boolean(node.tok.type).set_context(context).set_pos(node.pos_start, node.pos_end))
 
     def visit_NumberNode(self, node, context):
         return RTResult().success(
@@ -831,6 +834,8 @@ class Interpreter:
         if node.op_tok.type == TT_MINUS:
             number, error = number.multed_by(Number(-1))
         elif node.op_tok.type == TT_NOT:
+            if isinstance(number, Number):
+                return res.failure(RTError(node.pos_start, node.pos_end, "Unable to perform NOT on number", context))
             number, error = number.notted()
 
         if error:
