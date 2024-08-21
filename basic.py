@@ -110,6 +110,7 @@ TT_DEFUN = 'DEFUN'
 TT_LAMBDA = 'LAMBDA'
 TT_COMMA = ','
 TT_DOT = '.'
+TT_COLON = ':'
 TT_LBRACE = '{'
 TT_RBRACE = '}'
 TT_LBRACKET = '['
@@ -219,6 +220,9 @@ class Lexer:
                 self.advance()
             elif self.current_char == '.':
                 tokens.append(Token(TT_DOT, pos_start = self.pos))
+                self.advance()
+            elif self.current_char == ':':
+                tokens.append(Token(TT_COLON, pos_start = self.pos))
                 self.advance()
             elif self.current_char == '"':
                 tokens.append(self.make_string())
@@ -477,13 +481,13 @@ class CallNode:
         else:
             self.pos_end = self.node_to_call.pos_end
 
-    class LambdaNode:
-        def _init_(self, arg_name_toks, body_node, arg_exprs=None):
+class LambdaNode:
+    def _init_(self, arg_name_toks, body_node, arg_exprs=None):
             self.arg_name_toks = arg_name_toks
             self.body_node = body_node
             self.arg_exprs = arg_exprs or []
 
-        def _repr_(self):
+    def _repr_(self):
             return f"(lambda {', '.join([arg.value for arg in self.arg_name_toks])}, {self.body_node})"
 
 #######################################
@@ -561,6 +565,7 @@ class Parser:
         elif tok.type == TT_TRUE or tok.type == TT_FALSE:
             res.register(self.advance())
             return res.success(BoolNode(tok))
+
 
         elif tok.type == TT_LPAREN:
             res.register(self.advance())
