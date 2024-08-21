@@ -469,6 +469,8 @@ class VariableNode:
     def __repr__(self):
         return f'{self.tok.value}'
 
+
+
 class FuncDefNode:
     def __init__(self, var_name_tok, arg_name_toks, body_node):
         self.var_name_tok = var_name_tok
@@ -494,17 +496,17 @@ class FuncDefNode:
 #
 #         self.pos_end = self.body_node.pos_end
 
-class CallNode:
-    def __init__(self, node_to_call, arg_nodes):
-        self.node_to_call = node_to_call
-        self.arg_nodes = arg_nodes
-
-        self.pos_start = self.node_to_call.pos_start
-
-        if len(self.arg_nodes) > 0:
-            self.pos_end = self.arg_nodes[len(self.arg_nodes) - 1].pos_end
-        else:
-            self.pos_end = self.node_to_call.pos_end
+# class CallNode:
+#     def __init__(self, node_to_call, arg_nodes):
+#         self.node_to_call = node_to_call
+#         self.arg_nodes = arg_nodes
+#
+#         self.pos_start = self.node_to_call.pos_start
+#
+#         if len(self.arg_nodes) > 0:
+#             self.pos_end = self.arg_nodes[len(self.arg_nodes) - 1].pos_end
+#         else:
+#             self.pos_end = self.node_to_call.pos_end
 
 class LambdaNode:
     def _init_(self, arg_name_toks, body_node, arg_exprs=None):
@@ -539,6 +541,21 @@ class ParseResult:
         self.error = error
         return self
 
+
+class SymbolTable:
+    def __init__(self):
+        self.symbols = {}
+
+    def set(self, name, value):
+        self.symbols[name] = value
+
+    def get(self, name):
+        return self.symbols.get(name)
+
+    def remove(self, name):
+        if name in self.symbols:
+            del self.symbols[name]
+
 ###############
 # PARSER
 ###############
@@ -547,6 +564,8 @@ class Parser:
         self.tokens = tokens
         self.tok_idx = -1
         self.advance()
+        self.symbol_table = SymbolTable()
+
 
     def advance(self):
         self.tok_idx += 1
@@ -807,7 +826,11 @@ class Parser:
         #     ))
 
         res.register(self.advance())
-        return res.success(FuncDefNode(var_name_tok, arg_name_toks, body))
+        # Store the function definition in the SymbolTable
+        func_node = FuncDefNode(var_name_tok, arg_name_toks, body)
+        self.symbol_table.set(var_name_tok, func_node)
+
+        return res.success(func_node)
 
     def lambda_expr(self):
         res = ParseResult()
@@ -1044,20 +1067,21 @@ class Context:
         self.display_name = display_name
         self.parent = parent
         self.parent_entry_pos = parent_entry_pos
+        self.symbol_table = None
 
-class SymbolTable:
-    def __init__(self):
-        self.symbols = {}
-        self.parent = None
-
-    def get(self, name):
-        value = self.symbols.get(name, None)
-        if value is None and self.parent:
-            return self.parent.get(name)
-        return value
-
-    def set(self, name, value):
-        self.symbols[name] = value
+# class SymbolTable:
+#     def __init__(self):
+#         self.symbols = {}
+#         self.parent = None
+#
+#     def get(self, name):
+#         value = self.symbols.get(name, None)
+#         if value is None and self.parent:
+#             return self.parent.get(name)
+#         return value
+#
+#     def set(self, name, value):
+#         self.symbols[name] = value
 
 
 
@@ -1089,6 +1113,7 @@ class Interpreter:
         if res.error: return res
         right = res.register(self.visit(node.right_node, context))
         if res.error: return res
+
 
         error = None
         result = None
@@ -1190,7 +1215,7 @@ def run(fn, text):
     if ast.error: return None, ast.error
     return ast.node, ast.error
 
-    # Run program
+    # # Run program
     # interpreter = Interpreter()
     # context = Context('<program>')
     # result = interpreter.visit(ast.node, context)
