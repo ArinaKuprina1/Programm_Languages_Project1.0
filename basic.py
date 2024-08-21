@@ -439,6 +439,33 @@ class ComparisonNode:
     def __repr__(self):
         return f'({self.left_node} {self.op_tok} {self.right_node})'
 
+class FuncDefNode:
+    def __init__(self, var_name_tok, arg_name_toks, body_node):
+        self.var_name_tok = var_name_tok
+        self.arg_name_toks = arg_name_toks
+        self.body_node = body_node
+
+        if self.var_name_tok:
+            self.pos_start = self.var_name_tok.pos_start
+        elif len(self.arg_name_toks) > 0:
+            self.pos_start = self.arg_name_toks[0].pos_start
+        else:
+            self.pos_start = self.body_node.pos_start
+
+        self.pos_end = self.body_node.pos_end
+
+class CallNode:
+    def __init__(self, node_to_call, arg_nodes):
+        self.node_to_call = node_to_call
+        self.arg_nodes = arg_nodes
+
+        self.pos_start = self.node_to_call.pos_start
+
+        if len(self.arg_nodes) > 0:
+            self.pos_end = self.arg_nodes[len(self.arg_nodes) - 1].pos_end
+        else:
+            self.pos_end = self.node_to_call.pos_end
+
 #######################################
 # PARSE RESULT
 #######################################
@@ -483,7 +510,7 @@ class Parser:
         if not res.error and self.current_tok.type != TT_EOF:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                "Expected '+', '-', '*', '/', '^', '==', '!=', '<', '>', <=', '>=', 'AND' or 'OR'"
+                "Expected '+', '-', '*', '/', '==', '!=', '<', '>', <=', '>=', 'AND' or 'OR'"
             ))
         return res
 
@@ -501,7 +528,7 @@ class Parser:
             if res.error: return res
             return res.success(UnaryOpNode(tok, factor))
 
-        if tok.type in (TT_PLUS, TT_MINUS):
+        elif tok.type in (TT_PLUS, TT_MINUS):
             res.register(self.advance())
             factor = res.register(self.factor())
             if res.error: return res
