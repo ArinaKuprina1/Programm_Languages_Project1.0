@@ -688,9 +688,13 @@ class Number:
 
             return Number(self.value / other.value).set_context(self.context), None
 
+    def mod_by(self, other):
+        if isinstance(other, Number):
+            return Number(self.value % other.value).set_context(self.context), None
+
     def get_comparison_eq(self, other):
         if isinstance(other, Number):
-            return Boolean(self.value == other.value).set_context(self.context), None
+            return Boolean(TT_TRUE if (self.value == other.value) else TT_FALSE).set_context(self.context), None
 
     def get_comparison_ne(self, other):
         if isinstance(other, Number):
@@ -799,6 +803,8 @@ class Interpreter:
                 result, error = left.multed_by(right)
             elif node.op_tok.type == TT_DIV:
                 result, error = left.dived_by(right)
+            elif node.op_tok.type == TT_MODULO:
+                result, error = left.mod_by(right)
             elif node.op_tok.type == TT_EQ:
                 result, error = left.get_comparison_eq(right)
             elif node.op_tok.type == TT_NEQ:
@@ -858,11 +864,11 @@ def run(fn, text):
     parser = Parser(tokens)
     ast = parser.parse()
     if ast.error: return None, ast.error
-    #return ast.node, ast.error
+    return ast.node, ast.error
 
     # Run program
-    interpreter = Interpreter()
-    context = Context('<program>')
-    result = interpreter.visit(ast.node, context)
-
-    return result.value, result.error
+    # interpreter = Interpreter()
+    # context = Context('<program>')
+    # result = interpreter.visit(ast.node, context)
+    #
+    # return result.value, result.error
