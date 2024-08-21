@@ -105,7 +105,7 @@ TT_LT = 'LT'
 TT_GT = 'GT'
 TT_LTE = 'LTE'
 TT_GTE = 'GTE'
-TT_DEF = 'DEF'
+TT_DEFUN = 'DEFUN'
 TT_LAMBDA = 'LAMBDA'
 TT_LBRACE = '{'
 TT_RBRACE = '}'
@@ -329,8 +329,8 @@ class Lexer:
             return Token(TT_TRUE,pos_start=self.pos), None
         elif id_str.lower() == 'false':
             return Token(TT_FALSE,pos_start=self.pos), None
-        elif id_str == 'def':
-            return Token(TT_DEF,pos_start=self.pos), None
+        elif id_str == 'defun':
+            return Token(TT_DEFUN,pos_start=self.pos), None
         elif id_str == 'lambda':
             return Token(TT_LAMBDA,pos_start=self.pos), None
         else:
@@ -483,7 +483,7 @@ class Parser:
         if not res.error and self.current_tok.type != TT_EOF:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
-                "Expected '+', '-', '*' or '/'"
+                "Expected '+', '-', '*', '/', '^', '==', '!=', '<', '>', <=', '>=', 'AND' or 'OR'"
             ))
         return res
 
