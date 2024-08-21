@@ -1,10 +1,11 @@
 from string_with_arrows import *
-
+import string
 ###############
 # CONSTANTS
 ###############
 DIGITS = '0123456789'
-
+LETTERS = string.ascii_letters
+LETTERS_DIGITS = LETTERS + DIGITS
 
 ###############
 # ERRORS
@@ -107,6 +108,8 @@ TT_LTE = 'LTE'
 TT_GTE = 'GTE'
 TT_DEFUN = 'DEFUN'
 TT_LAMBDA = 'LAMBDA'
+TT_COMMA = ','
+TT_POINT = '.'
 TT_LBRACE = '{'
 TT_RBRACE = '}'
 TT_LBRACKET = '['
@@ -211,13 +214,21 @@ class Lexer:
                     tokens.extend(result)
                 else:
                     tokens.append(Token(TT_DIV, pos_start=self.pos))
+            elif self.current_char == ',':
+                tokens.append(Token(TT_COMMA, pos_start = self.pos))
+                self.advance()
+            elif self.current_char == '.':
+                tokens.append(Token(TT_POINT, pos_start = self.pos))
+                self.advance()
             elif self.current_char == '"':
                 tokens.append(self.make_string())
-            elif self.current_char.isalpha() or self.current_char == '_':
+            elif self.current_char in LETTERS:
                 token, error = self.make_identifier()
                 if error:
                     return [], error
                 tokens.append(token)
+            elif self.current_char in LETTERS:
+                tokens.append(self.make_identifier())
             elif self.current_char in DIGITS:
                 tokens.append(self.make_number())
             elif self.current_char == '+':
@@ -321,13 +332,13 @@ class Lexer:
 
     def make_identifier(self):
         id_str = ''
-        while self.current_char is not None and (self.current_char.isalnum() or self.current_char == '_'):
+        while self.current_char is not None and self.current_char in LETTERS_DIGITS + '_':
             id_str += self.current_char
             self.advance()
-
-        if id_str.lower() == 'true':
+        id_str = id_str.lower()
+        if id_str == 'true':
             return Token(TT_TRUE,pos_start=self.pos), None
-        elif id_str.lower() == 'false':
+        elif id_str == 'false':
             return Token(TT_FALSE,pos_start=self.pos), None
         elif id_str == 'defun':
             return Token(TT_DEFUN,pos_start=self.pos), None
@@ -335,8 +346,8 @@ class Lexer:
             return Token(TT_LAMBDA,pos_start=self.pos), None
         else:
             pos_start = self.pos.copy()
-            return Token('IDENTIFIER', id_str, pos_start, self.pos), IllegalCharacterError(pos_start, self.pos,
-                                                                                           f"Unknown identifier '{id_str}'")
+            return Token('IDENTIFIER', id_str, pos_start, self.pos), None
+
     def make_number(self):
         num_str = ''
         dot_count = 0
@@ -555,6 +566,16 @@ class Parser:
                     "Expected ')'"
                 ))
 
+        elif tok.type == TT_DEFUN:
+            func_def = res.register(self.func_def())
+            if res.error: return res
+            return res.success(func_def)
+
+        elif tok.type == TT_LAMBDA:
+            lambda_expr = res.register(self.lambda_expr())
+            if res.error: return res
+            return res.success(lambda_expr)
+
         return res.failure(InvalidSyntaxError(
             tok.pos_start, tok.pos_end,
             "Expected int or float or boolean"
@@ -634,6 +655,137 @@ class Parser:
             left = ComparisonNode(left, op_tok, right)
 
         return res.success(left)
+
+    def func_def(self):
+        res = ParseResult()
+        if not self.current_tok.type == TT_DEFUN:
+            return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected 'defun'"
+            ))
+
+        res.register(self.advance())
+
+        if self.current_tok.type != 'IDENTIFIER':
+            return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected function name"
+            ))
+
+        var_name_tok = self.current_tok
+        res.register(self.advance())
+
+        if self.current_tok.type != TT_LPAREN:
+            return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected '('"
+            ))
+
+        res.register(self.advance())
+        arg_name_toks = []
+
+        if self.current_tok.type == 'IDENTIFIER':
+            arg_name_toks.append(self.current_tok)
+            res.register(self.advance())
+
+            while self.current_tok.type == TT_COMMA:
+                res.register(self.advance())
+
+                if self.current_tok.type != 'IDENTIFIER':
+                    return res.failure(InvalidSyntaxError(
+                        self.current_tok.pos_start, self.current_tok.pos_end,
+                        "Expected identifier"
+                    ))
+
+                arg_name_toks.append(self.current_tok)
+                res.register(self.advance())
+
+        if self.current_tok.type != TT_RPAREN:
+            return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected ')'"
+            ))
+
+        res.register(self.advance())
+
+        if self.current_tok.type != TT_LBRACE:
+            return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected '{'"
+            ))
+
+        res.register(self.advance())
+
+        body = res.register(self.expr())
+        if res.error: return res
+
+        if self.current_tok.type != TT_RBRACE:
+            return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected '}'"
+            ))
+
+        res.register(self.advance())
+        return res.success(FuncDefNode(var_name_tok, arg_name_toks, body))
+
+    def lambda_expr(self):
+        res = ParseResult()
+        if not self.current_tok.type == TT_LAMBDA:
+            return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected 'lambda'"
+            ))
+
+        res.register(self.advance())
+
+        if self.current_tok.type != 'IDENTIFIER':
+            return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected identifier"
+            ))
+
+        arg_name_toks = []
+
+        while self.current_tok.type == 'IDENTIFIER':
+            arg_name_toks.append(self.current_tok)
+            res.register(self.advance())
+
+            if self.current_tok.type == TT_COMMA:
+                res.register(self.advance())
+            else:
+                break
+
+        if self.current_tok.type != TT_DOT:
+            return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected '.'"
+            ))
+
+        res.register(self.advance())
+        body = res.register(self.expr())
+        if res.error: return res
+
+        # Optionally handle application of the lambda expression
+        arg_exprs = []
+        if self.current_tok.type == TT_LPAREN:
+            res.register(self.advance())
+            arg_exprs.append(res.register(self.expr()))
+            if res.error: return res
+
+            while self.current_tok.type == TT_COMMA:
+                res.register(self.advance())
+                arg_exprs.append(res.register(self.expr()))
+                if res.error: return res
+
+            if self.current_tok.type != TT_RPAREN:
+                return res.failure(InvalidSyntaxError(
+                    self.current_tok.pos_start, self.current_tok.pos_end,
+                    "Expected ')'"
+                ))
+
+            res.register(self.advance())
+
+        return res.success(LambdaNode(arg_name_toks, body, arg_exprs))
 
 ###################################
 
