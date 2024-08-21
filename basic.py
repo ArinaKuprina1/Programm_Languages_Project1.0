@@ -28,6 +28,10 @@ class IllegalCharacterError(Error):
     def __init__(self, pos_start, pos_end, details):
         super().__init__(pos_start, pos_end, 'Illegal Character', details)
 
+class ExpectedCharError(Error):
+    def __init__(self, pos_start, pos_end, details):
+        super().__init__(pos_start, pos_end, 'Expected Character', details)
+
 class InvalidSyntaxError(Error):
         def __init__(self, pos_start, pos_end, details=''):
                 super().__init__(pos_start, pos_end, 'Invalid Syntax', details)
@@ -199,18 +203,8 @@ class Lexer:
                 self.advance()
                 self.skip_comment()
             elif self.current_char == '/':
+                tokens.append(Token(TT_DIV, pos_start=self.pos))
                 self.advance()
-                if self.current_char == '/':
-                    self.advance()
-                    self.skip_comment()
-                elif self.current_char == '*':
-                    self.advance()
-                    result, error = self.handle_multiline_comment()
-                    if error:
-                        return [], error
-                    tokens.extend(result)
-                else:
-                    tokens.append(Token(TT_DIV, pos_start=self.pos))
             elif self.current_char == '"':
                 tokens.append(self.make_string())
             elif self.current_char.isalpha() or self.current_char == '_':
@@ -319,6 +313,7 @@ class Lexer:
         tokens.append(Token(TT_EOF, pos_start=self.pos))
         return tokens, None
 
+
     def make_identifier(self):
         id_str = ''
         while self.current_char is not None and (self.current_char.isalnum() or self.current_char == '_'):
@@ -329,9 +324,9 @@ class Lexer:
             return Token(TT_TRUE,pos_start=self.pos), None
         elif id_str.lower() == 'false':
             return Token(TT_FALSE,pos_start=self.pos), None
-        elif id_str == 'def':
+        elif id_str.lower() == 'def':
             return Token(TT_DEF,pos_start=self.pos), None
-        elif id_str == 'lambda':
+        elif id_str.lower() == 'lambda':
             return Token(TT_LAMBDA,pos_start=self.pos), None
         else:
             pos_start = self.pos.copy()
@@ -413,9 +408,6 @@ class BoolOpNode:
 class BoolNode:
     def __init__(self, tok):
         self.tok = tok
-
-        self.pos_start = self.tok.pos_start
-        self.pos_end = self.tok.pos_end
 
     def __repr__(self):
         return f'({self.tok})'
@@ -536,32 +528,11 @@ class Parser:
     def term(self):
         return self.bin_op(self.factor, (TT_MUL, TT_DIV, TT_MODULO))
 
-    def comp_expr(self):
-        res = ParseResult()
-
-        if self.current_tok.type == TT_NOT:
-            op_tok = self.current_tok
-            res.register(self.advance())
-
-            node = res.register(self.comp_expr())
-            if res.error: return res
-            return res.success(UnaryOpNode(op_tok, node))
-        node = res.register(self.bin_op(self.arith_expr, (TT_EQ, TT_NEQ, TT_LT, TT_GT, TT_LTE, TT_GTE)))
-
-        if res.error:
-            return res.failure(InvalidSyntaxError(
-                self.current_tok.pos_start, self.current_tok.pos_end,
-                "Expected int or float or NOT")
-            )
-
-        return res.success(node)
-    def arith_expr(self):
-        return self.bin_op(self.term, (TT_PLUS, TT_MINUS))
 
     def expr(self):
 
         res = ParseResult()
-        left = res.register(self.bin_op(self.comp_expr, (TT_AND, TT_OR)))
+        left = res.register(self.bin_op(self.term, (TT_PLUS, TT_MINUS)))
         if res.error: return res
 
         while self.current_tok.type in (TT_AND, TT_OR):
@@ -688,61 +659,8 @@ class Number:
 
             return Number(self.value / other.value).set_context(self.context), None
 
-    def get_comparison_eq(self, other):
-        if isinstance(other, Number):
-            return Boolean(TT_TRUE if self.value == other.value else TT_FALSE).set_context(self.context), None
-
-    def get_comparison_ne(self, other):
-        if isinstance(other, Number):
-            return Boolean(bool(self.value != other.value)).set_context(self.context), None
-
-    def get_comparison_lt(self, other):
-        if isinstance(other, Number):
-            return Boolean(bool(self.value < other.value)).set_context(self.context), None
-
-    def get_comparison_gt(self, other):
-        if isinstance(other, Number):
-            return Boolean(bool(self.value > other.value)).set_context(self.context), None
-
-    def get_comparison_lte(self, other):
-        if isinstance(other, Number):
-            return Boolean(bool(self.value <= other.value)).set_context(self.context), None
-
-    def get_comparison_gte(self, other):
-        if isinstance(other, Number):
-            return Boolean(bool(self.value >= other.value)).set_context(self.context), None
-
-
     def __repr__(self):
         return str(self.value)
-
-
-class Boolean:
-    def __init__(self, value):
-        self.value = value
-        self.set_pos()
-        self.set_context()
-
-    def set_pos(self, pos_start=None, pos_end=None):
-        self.pos_start = pos_start
-        self.pos_end = pos_end
-        return self
-
-    def set_context(self, context=None):
-        self.context = context
-        return self
-
-    def anded_by(self, other):
-        if isinstance(other, Boolean):
-            return Boolean(TT_TRUE if self.value == TT_TRUE and other.value == TT_TRUE else TT_FALSE).set_context(self.context), None
-             #  bool(self.value and other.value)).set_context(self.context), None
-
-    def ored_by(self, other):
-        if isinstance(other, Boolean):
-            return Boolean(bool(self.value or other.value)).set_context(self.context), None
-
-    def notted(self):
-        return Boolean(True if self.value == False else False).set_context(self.context), None
 
 #######################################
 # CONTEXT
@@ -781,32 +699,14 @@ class Interpreter:
         right = res.register(self.visit(node.right_node, context))
         if res.error: return res
 
-        if isinstance(left, Number):
-            if node.op_tok.type == TT_PLUS:
-                result, error = left.added_to(right)
-            elif node.op_tok.type == TT_MINUS:
-                result, error = left.subbed_by(right)
-            elif node.op_tok.type == TT_MUL:
-                result, error = left.multed_by(right)
-            elif node.op_tok.type == TT_DIV:
-                result, error = left.dived_by(right)
-            elif node.op_tok.type == TT_EQ:
-                result, error = left.get_comparison_eq(right)
-            elif node.op_tok.type == TT_NEQ:
-                result, error = left.get_comparison_ne(right)
-            elif node.op_tok.type == TT_LT:
-                result, error = left.get_comparison_lt(right)
-            elif node.op_tok.type == TT_GT:
-                result, error = left.get_comparison_gt(right)
-            elif node.op_tok.type == TT_LTE:
-                result, error = left.get_comparison_lte(right)
-            elif node.op_tok.type == TT_GTE:
-                result, error = left.get_comparison_gte(right)
-        elif isinstance(left, Boolean):
-            if node.op_tok.type == TT_AND:
-                result, error = left.anded_by(right)
-            elif node.op_tok.type == TT_OR:
-                result, error = left.ored_by(right)
+        if node.op_tok.type == TT_PLUS:
+            result, error = left.added_to(right)
+        elif node.op_tok.type == TT_MINUS:
+            result, error = left.subbed_by(right)
+        elif node.op_tok.type == TT_MUL:
+            result, error = left.multed_by(right)
+        elif node.op_tok.type == TT_DIV:
+            result, error = left.dived_by(right)
 
         if error:
             return res.failure(error)
@@ -822,8 +722,6 @@ class Interpreter:
 
         if node.op_tok.type == TT_MINUS:
             number, error = number.multed_by(Number(-1))
-        elif node.op_tok.type == TT_NOT:
-            number, error = number.notted()
 
         if error:
             return res.failure(error)
@@ -845,7 +743,6 @@ def run(fn, text):
     parser = Parser(tokens)
     ast = parser.parse()
     if ast.error: return None, ast.error
-    #return ast.node, ast.error
 
     # Run program
     interpreter = Interpreter()
