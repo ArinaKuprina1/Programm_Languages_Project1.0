@@ -344,6 +344,12 @@ class Lexer:
             return Token(TT_TRUE,pos_start=self.pos), None
         elif id_str == 'false':
             return Token(TT_FALSE,pos_start=self.pos), None
+        elif id_str == 'or':
+            return Token(TT_OR, pos_start=self.pos), None
+        elif id_str == 'and':
+            return Token(TT_AND, pos_start=self.pos), None
+        elif id_str == 'not':
+            return Token(TT_NOT, pos_start=self.pos), None
         elif id_str == 'defun':
             return Token(TT_DEFUN,pos_start=self.pos), None
         elif id_str == 'lambda':
@@ -454,20 +460,39 @@ class ComparisonNode:
     def __repr__(self):
         return f'({self.left_node} {self.op_tok} {self.right_node})'
 
+class VariableNode:
+    def __init__(self, tok):
+        self.tok = tok
+        self.pos_start = tok.pos_start
+        self.pos_end = tok.pos_end
+
+    def __repr__(self):
+        return f'{self.tok.value}'
+
 class FuncDefNode:
     def __init__(self, var_name_tok, arg_name_toks, body_node):
         self.var_name_tok = var_name_tok
         self.arg_name_toks = arg_name_toks
         self.body_node = body_node
 
-        if self.var_name_tok:
-            self.pos_start = self.var_name_tok.pos_start
-        elif len(self.arg_name_toks) > 0:
-            self.pos_start = self.arg_name_toks[0].pos_start
-        else:
-            self.pos_start = self.body_node.pos_start
+    def __repr__(self):
+        return f'(defun {self.var_name_tok.value}({", ".join([arg.value for arg in self.arg_name_toks])}) {{ {self.body_node} }})'
 
-        self.pos_end = self.body_node.pos_end
+
+# class FuncDefNode:
+#     def __init__(self, var_name_tok, arg_name_toks, body_node):
+#         self.var_name_tok = var_name_tok
+#         self.arg_name_toks = arg_name_toks
+#         self.body_node = body_node
+#
+#         if self.var_name_tok:
+#             self.pos_start = self.var_name_tok.pos_start
+#         elif len(self.arg_name_toks) > 0:
+#             self.pos_start = self.arg_name_toks[0].pos_start
+#         else:
+#             self.pos_start = self.body_node.pos_start
+#
+#         self.pos_end = self.body_node.pos_end
 
 class CallNode:
     def __init__(self, node_to_call, arg_nodes):
@@ -580,6 +605,10 @@ class Parser:
                     "Expected ')'"
                 ))
 
+        elif tok.type == 'IDENTIFIER':  # handle variables
+            res.register(self.advance())
+            return res.success(VariableNode(tok))
+
         elif tok.type == TT_DEFUN:
             func_def = res.register(self.func_def())
             if res.error: return res
@@ -685,7 +714,7 @@ class Parser:
                 self.current_tok.pos_start, self.current_tok.pos_end,
                 "Expected '{'"
             ))
-
+        res.register(self.advance())
         # check syntax of func name
         if self.current_tok.type != 'IDENTIFIER':
             return res.failure(InvalidSyntaxError(
@@ -701,10 +730,18 @@ class Parser:
                 "Expected ':'"
             ))
         # get the name of the funct
+        res.register(self.advance())
         var_name_tok = self.current_tok.value
         res.register(self.advance())
 
         # check syntax of arguments
+        if self.current_tok.type != TT_COMMA:
+            return res.failure(InvalidSyntaxError(
+                self.current_tok.pos_start, self.current_tok.pos_end,
+                "Expected ',' "
+            ))
+
+        res.register(self.advance())
         if self.current_tok.type != 'IDENTIFIER':
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
@@ -718,7 +755,7 @@ class Parser:
                 self.current_tok.pos_start, self.current_tok.pos_end,
                 "Expected ':'"
             ))
-
+        res.register(self.advance())
         if self.current_tok.type != TT_LPAREN:
             return res.failure(InvalidSyntaxError(
                 self.current_tok.pos_start, self.current_tok.pos_end,
@@ -976,6 +1013,28 @@ class Boolean:
     def __repr__(self):
         return 'true' if self.value == TT_TRUE else 'false'
 
+
+class Function:
+    def __init__(self, arg_name_toks, body_node, context):
+        self.arg_name_toks = arg_name_toks  # List of argument tokens
+        self.body_node = body_node          # The body of the function (AST node)
+        self.context = context              # The context in which the function was defined
+
+    def execute(self, args):
+        # Create a new context for this function call
+        new_context = Context(parent=self.context)
+
+        # Set the arguments in the new context
+        for i, arg_name_tok in enumerate(self.arg_name_toks):
+            arg_value = args[i]
+            new_context.symbol_table.set(arg_name_tok.value, arg_value)
+
+        # Execute the function body
+        interpreter = Interpreter()
+        result = interpreter.visit(self.body_node, new_context)
+
+        return result
+
 #######################################
 # CONTEXT
 #######################################
@@ -985,6 +1044,21 @@ class Context:
         self.display_name = display_name
         self.parent = parent
         self.parent_entry_pos = parent_entry_pos
+
+class SymbolTable:
+    def __init__(self):
+        self.symbols = {}
+        self.parent = None
+
+    def get(self, name):
+        value = self.symbols.get(name, None)
+        if value is None and self.parent:
+            return self.parent.get(name)
+        return value
+
+    def set(self, name, value):
+        self.symbols[name] = value
+
 
 
 ###############
@@ -1073,6 +1147,21 @@ class Interpreter:
             return res.failure(error)
         else:
             return res.success(number.set_pos(node.pos_start, node.pos_end))
+
+    def visit_VariableNode(self, node, context):
+        var_name = node.tok.value
+        value = context.symbol_table.get(var_name)
+
+        if value is None:
+            raise RuntimeError(f"'{var_name}' is not defined")
+
+        return value
+
+    def visit_FuncDefNode(self, node, context):
+        func_name = node.var_name_tok.value
+        func = Function(node.arg_name_toks, node.body_node, context)
+        context.symbol_table.set(func_name, func)
+        return func
 
     def visit_LambdaNode(self, node, context):
         # Create a function object from the lambda expression
