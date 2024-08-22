@@ -34,6 +34,7 @@ Replacement for traditional loops using recursion.
 5. Immutability
 All values are immutable.
 No variable assignments or state changes.
+
 Project Components
 1. Lexer
 Tokenizes the input source code.
@@ -55,3 +56,7 @@ Describes language syntax, features, and design considerations.
 Comments throughout the code to explain key components and algorithms.
 7. Testing
 Comprehensive test suite covering all language features, including edge cases and error conditions.
+
+*Please note that when entering inputs such as `True`, `False`, `And`, `Or`, and similar keywords, they must be entered in all capital letters!
+*The only format for Lambda expression is: (Lambd x.(x+2))(3)
+*The only format for Lambda expression is: FUN factorial(n) -> IF (n == 0) THEN 1 ELSE (n * factorial(n-1)) *or* FUN add(a, b) -> a + b
