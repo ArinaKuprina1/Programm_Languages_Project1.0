@@ -1,5 +1,5 @@
 Functional Programming Interpreter - ReadMe
-Project Overview
+
 This project involves the development of a functional programming interpreter designed for a simple language that emphasizes function definitions and lambda expressions. The language is characterized by immutability, recursive functions, and the absence of variable assignments or mutable state.
 
 Language Specifications
