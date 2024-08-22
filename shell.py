@@ -24,6 +24,18 @@
 import basic
 import os
 
+
+def run_game_test(filename):
+    with open(filename, 'r') as file:
+        game_code = file.read()
+
+    print("Running Number Guessing Game:")
+    result, error = basic.run('<game>', game_code)
+    if error:
+        print(f"Error: {error.as_string()}")
+    else:
+        print(f"Game completed. Final result: {result}")
+
 def main():
     try:
         while True:
@@ -39,6 +51,9 @@ def main():
                 if not os.path.exists(filename):
                     print(f"Error: File '{filename}' not found.")
                     continue
+
+                if filename == "game.lambda.txt":
+                    run_game_test(filename)
 
                 try:
                     with open(filename, 'r') as file:
