@@ -456,20 +456,24 @@ class ParseResult:
         self.last_registered_advance_count = 0
         self.advance_count = 0
 
+    # Records that an advancement in token parsing has occurred, updating the respective count.
     def register_advancement(self):
         self.last_registered_advance_count = 1
         self.advance_count += 1
 
+    # Registers a parse result, updating advancement counts and error state if applicable. Returns the node from the result.
     def register(self, res):
         self.last_registered_advance_count = res.advance_count
         self.advance_count += res.advance_count
         if res.error: self.error = res.error
         return res.node
 
+    # Marks the parse result as successful, storing the given node.
     def success(self, node):
         self.node = node
         return self
 
+    # Marks the parse result as failed, storing the provided error if it's the first error or if no advancement was made.
     def failure(self, error):
         if not self.error or self.last_registered_advance_count == 0:
             self.error = error
@@ -486,12 +490,14 @@ class Parser:
         self.tok_idx = -1
         self.advance()
 
+    # Moves the parser to the next token and returns the current token.
     def advance(self, ):
         self.tok_idx += 1
         if self.tok_idx < len(self.tokens):
             self.current_tok = self.tokens[self.tok_idx]
         return self.current_tok
 
+    # Initiates the parsing process by starting with the expression. Checks for errors or unexpected tokens at the end.
     def parse(self):
         res = self.expr()
         if not res.error and self.current_tok.type != TT_EOF:
@@ -503,6 +509,7 @@ class Parser:
 
     ###################################
 
+    # Parses expressions, including variable assignments and binary operations like AND and OR.
     def expr(self):
         res = ParseResult()
 
@@ -542,6 +549,7 @@ class Parser:
 
         return res.success(node)
 
+    # Parses comparison expressions, such as equality and relational operations, as well as unary operations like NOT.
     def comp_expr(self):
         res = ParseResult()
 
@@ -564,12 +572,15 @@ class Parser:
 
         return res.success(node)
 
+    # Parses arithmetic expressions involving addition and subtraction.
     def arith_expr(self):
         return self.bin_op(self.term, (TT_PLUS, TT_MINUS))
 
+    # Parses term expressions involving multiplication and division.
     def term(self):
         return self.bin_op(self.factor, (TT_MUL, TT_DIV))
 
+    # Parses factors, which can be numbers or unary operations like negation.
     def factor(self):
         res = ParseResult()
         tok = self.current_tok
@@ -584,8 +595,9 @@ class Parser:
         return self.power()
 
     def power(self):
-        return self.bin_op(self.call, (TT_POW,), self.factor)
+        return self.bin_op(self.call, (TT_POW, ), self.factor)
 
+    # Parses function calls, including the arguments passed to the function.
     def call(self):
         res = ParseResult()
         atom = res.register(self.atom())
@@ -625,6 +637,7 @@ class Parser:
             return res.success(CallNode(atom, arg_nodes))
         return res.success(atom)
 
+    # Parses atomic expressions, which are the basic building blocks such as numbers, variables, or grouped expressions.
     def atom(self):
         res = ParseResult()
         tok = self.current_tok
@@ -674,6 +687,7 @@ class Parser:
             "Expected int, float, identifier, '+', '-', '(', 'IF', 'FUN', 'Lambd'"
         ))
 
+    # Parses if-else expressions, handling the conditions and branches.
     def if_expr(self):
         res = ParseResult()
         cases = []
@@ -733,6 +747,7 @@ class Parser:
 
         return res.success(IfNode(cases, else_case))
 
+    # Parses function definitions, capturing the function name, parameters, and body.
     def func_def(self):
         res = ParseResult()
 
@@ -819,6 +834,7 @@ class Parser:
 
     ###################################
 
+    # A generic method for parsing binary operations between two expressions (like addition or multiplication).
     def bin_op(self, func_a, ops, func_b=None):
         if func_b == None:
             func_b = func_a
@@ -837,6 +853,7 @@ class Parser:
 
         return res.success(left)
 
+    # Parses lambda expressions, which are anonymous functions defined with a single parameter and a body.
     def lambda_expr(self):
         res = ParseResult()
 

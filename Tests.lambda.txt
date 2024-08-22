@@ -21,3 +21,6 @@
 (Lambd x.(Lambd y.(x != y))(5))(5)
 (Lambd x.(Lambd y.(Lambd z.(x + y*z))(2))(3))(4)
 (Lambd x.(x * x))((Lambd y.(y+1))(2))
+FUN factorial(n) -> IF (n == 0) THEN 1 ELSE (n * factorial(n-1))
+factorial(5)
+factorial((Lambd x.(Lambd y.(x * y))(2))(3))
