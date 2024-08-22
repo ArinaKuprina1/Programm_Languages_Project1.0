@@ -1,2 +1,4 @@
 FUN factorial(n) -> IF (n == 0) THEN 1 ELSE (n * factorial(n-1))
 factorial (5)
+FUN add(a, b) -> a + b
+factorial(add(2,4))

@@ -116,7 +116,6 @@ TT_PLUS = 'PLUS'
 TT_MINUS = 'MINUS'
 TT_MUL = 'MUL'
 TT_DIV = 'DIV'
-TT_POW = 'POW'
 TT_EQ = 'EQ'
 TT_LPAREN = 'LPAREN'
 TT_RPAREN = 'RPAREN'
@@ -206,9 +205,6 @@ class Lexer:
                 self.advance()
             elif self.current_char == '/':
                 tokens.append(Token(TT_DIV, pos_start=self.pos))
-                self.advance()
-            elif self.current_char == '^':
-                tokens.append(Token(TT_POW, pos_start=self.pos))
                 self.advance()
             elif self.current_char == '(':
                 tokens.append(Token(TT_LPAREN, pos_start=self.pos))
@@ -509,7 +505,7 @@ class Parser:
 
     ###################################
 
-    # Parses expressions, including variable assignments and binary operations like AND and OR.
+    # Parses expressions, including binary operations like AND and OR.
     def expr(self):
         res = ParseResult()
 
@@ -592,10 +588,9 @@ class Parser:
             if res.error: return res
             return res.success(UnaryOpNode(tok, factor))
 
-        return self.power()
+        return self.call()
 
-    def power(self):
-        return self.bin_op(self.call, (TT_POW, ), self.factor)
+
 
     # Parses function calls, including the arguments passed to the function.
     def call(self):
@@ -637,7 +632,7 @@ class Parser:
             return res.success(CallNode(atom, arg_nodes))
         return res.success(atom)
 
-    # Parses atomic expressions, which are the basic building blocks such as numbers, variables, or grouped expressions.
+    # Parses atomic expressions, which are the basic building blocks such as numbers or grouped expressions.
     def atom(self):
         res = ParseResult()
         tok = self.current_tok
@@ -942,9 +937,6 @@ class Value:
     def dived_by(self, other):
         return None, self.illegal_operation(other)
 
-    def powed_by(self, other):
-        return None, self.illegal_operation(other)
-
     def get_comparison_eq(self, other):
         return None, self.illegal_operation(other)
 
@@ -1023,12 +1015,6 @@ class Number(Value):
                 )
 
             return Number(self.value / other.value).set_context(self.context), None
-        else:
-            return None, Value.illegal_operation(self, other)
-
-    def powed_by(self, other):
-        if isinstance(other, Number):
-            return Number(self.value ** other.value).set_context(self.context), None
         else:
             return None, Value.illegal_operation(self, other)
 
@@ -1236,8 +1222,6 @@ class Interpreter:
             result, error = left.multed_by(right)
         elif node.op_tok.type == TT_DIV:
             result, error = left.dived_by(right)
-        elif node.op_tok.type == TT_POW:
-            result, error = left.powed_by(right)
         elif node.op_tok.type == TT_EE:
             result, error = left.get_comparison_eq(right)
         elif node.op_tok.type == TT_NE:
