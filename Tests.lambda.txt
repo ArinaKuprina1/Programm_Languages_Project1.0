@@ -21,3 +21,8 @@
 (Lambd x.(Lambd y.(x != y))(5))(5)
 (Lambd x.(Lambd y.(Lambd z.(x + y*z))(2))(3))(4)
 (Lambd x.(x * x))((Lambd y.(y+1))(2))
+(1 + )
+(/ 2 0)
+((Lambd x x) 1 2)
+(TRUE + FALSE)
+(Lambd)
