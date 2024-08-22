@@ -7,7 +7,9 @@
     <list default="true" id="7754e707-8f73-4d26-b6ac-ab109b5ff796" name="Changes" comment="interpreter performs comparison operations,arithmetic operations , bool operations">
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/basic.py" beforeDir="false" afterPath="$PROJECT_DIR$/basic.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/basic.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/shell.py" beforeDir="false" afterPath="$PROJECT_DIR$/shell.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/string_with_arrows.py" beforeDir="false" afterPath="$PROJECT_DIR$/string_with_arrows.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -72,6 +74,7 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
+      <option name="SDK_NAME" value="Python 3.12" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
       <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
@@ -200,7 +203,15 @@
       <option name="project" value="LOCAL‎" />
       <updated>1724271106216</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL‎-00013" summary="interpreter performs comparison operations,arithmetic operations , bool operations">
+      <option name="closed" value="true" />
+      <created>1724274547734</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL‎-00013" />
+      <option name="project" value="LOCAL‎" />
+      <updated>1724274547735</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -213,17 +224,6 @@
     <MESSAGE value="parser identifies bool, int ,comparison operations,arithmetic operations , bool operations" />
     <MESSAGE value="interpreter performs comparison operations,arithmetic operations , bool operations" />
     <option name="LAST_COMMIT_MESSAGE" value="interpreter performs comparison operations,arithmetic operations , bool operations" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/basic.py</url>
-          <line>1136</line>
-          <option name="timeStamp" value="32" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/Programm_Languages_Project1_0$basic.coverage" NAME="basic Coverage Results" MODIFIED="1724270882932" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
